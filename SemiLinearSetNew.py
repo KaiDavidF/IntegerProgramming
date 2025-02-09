@@ -6,15 +6,6 @@ from LinearEquation import solveIntegerEquation
 def constructNaturalNumbers(dimension : int):
     return np.zeros(dimension, dtype=int), np.eye(dimension, dtype=int)
 
-def buildVector(coefficients, vectors, b = None):
-    vectors = np.array(vectors, dtype=int)
-    vector = np.zeros(vectors[0].shape[0], dtype=int)
-    
-    for i in range(len(coefficients)):
-        vector += int(coefficients[i]) * vectors[i]
-    if b is not None:
-        vector += np.array(b, dtype=int)
-    return vector.tolist()
 
 
 class LinearSet:
@@ -73,6 +64,21 @@ class LinearSet:
         solution = solveIntegerEquation(A, rhs)
         return solution is not None
     
+    # Receives multiple vectors and computes Minkowski sum of vectors in that order.
+    def addVectors(self, vectors : list[list[int]]):
+        for v in vectors:
+            assert len(v) == self.dimension
+        bNat, PNat = constructNaturalNumbers(self.dimension)
+        
+        P = self.P
+        b = self.b
+        for v in vectors:
+            P = P + [v]
+            C, Q = intersect(bNat, PNat, b, P)
+            # etc etc
+        
+        pass
+    
     def addVector(self, v : list[int]):
         """
         Computes the Minkowski sum: L(b, P) + ℕ₀·v.
@@ -83,22 +89,10 @@ class LinearSet:
         P = self.P + [v] # add the possibly negative vector to period set.
         b = self.b
         
-
-        C, Q = intersect(bNat, PNat, b, P)
+        C, Q = intersect(b, P, bNat, PNat)
         
-        numOfCoeff = len(P)
-        baseCoefficients = [point[:numOfCoeff] for point in C]
-        periodCoefficients = [point[:numOfCoeff] for point in Q]
-        
-        newBasePoints = []
-        newPeriodSet = []
-        
-        for coeff in periodCoefficients:
-            newPeriodSet.append(buildVector(coeff, P))
-        for coeff in baseCoefficients:
-            newBasePoints.append(buildVector(coeff, P, b))
-        
-        return newBasePoints, newPeriodSet
+        numOfCoeff = self.dimension
+        return [point[:numOfCoeff] for point in C], [point[:numOfCoeff] for point in Q]
         
 class SemiLinearSet:
     def __init__(self, linearSets : list[LinearSet]):
@@ -113,12 +107,17 @@ class SemiLinearSet:
         basePoints = []
         for lSet in self.linearSets:
             B, P = lSet.addVector(v)
+            # TODO: Optimierungsidee: Vielleicht enthält eines der neuen Linear Sets bereits das aktuelle Linear Set?
             P = [list(x) for x in set(tuple(x) for x in P)]
             for b in B:
                 if b not in basePoints:
                     linearSets.append(LinearSet(b, P))
                     basePoints.append(b)
         self.linearSets = linearSets
+        
+        # TODO: Vielleicht können wir das hier anders lösen, zB über Redundant constraint elimination
+        self.removeRedundantBasePoints()
+        self.removeRedundantPeriods()
         
     def contains(self, x):
         for lSet in self.linearSets:
@@ -145,7 +144,6 @@ class SemiLinearSet:
         self.linearSets = []
         for b in newB:
             self.linearSets.append(LinearSet(b, P))
-    
 
             
 
@@ -200,28 +198,21 @@ def removeRedundantBasePoints(B, P):
 def test1():
     L = SemiLinearSet([LinearSet(b = [0,3], P = [[0,1]])])
     L.addVector([3,-1])
+    print(L)
     L.addVector([5,-1])
-    L.addVector([-1,0])
-    L.removeRedundantBasePoints()
-    L.removeRedundantPeriods()
     print(L)
     
 def test2():
     L = SemiLinearSet([LinearSet(b = [5,0,0], P = [[1,0,0]])])
     L.addVector([-1,23,5])
-    L.removeRedundantBasePoints()
-    L.removeRedundantPeriods()
     L.addVector([1,0,0])
-    L.removeRedundantBasePoints()
-    L.removeRedundantPeriods()
     L.addVector([2,-1,3])
-    L.removeRedundantBasePoints()
-    L.removeRedundantPeriods()
 
     print(L)
         
 if __name__ == "__main__":
-    test2()
+    #test1()
+    test1()
     
 
     
