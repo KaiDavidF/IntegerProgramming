@@ -6,7 +6,9 @@ from LinearEquation import solveIntegerEquation
 def constructNaturalNumbers(dimension : int):
     return np.zeros(dimension, dtype=int), np.eye(dimension, dtype=int)
 
-
+class FullLinearSet:
+    
+    pass
 
 class LinearSet:
     def __init__(self, b : list[int], P : list[list[int]]):
@@ -72,12 +74,20 @@ class LinearSet:
         
         P = self.P
         b = self.b
+        
+        basePoints = []
+        periodPoints = []
+        
+        numOfCoeff = self.dimension
+        
         for v in vectors:
             P = P + [v]
-            C, Q = intersect(bNat, PNat, b, P)
-            # etc etc
+            C, Q = intersect(b, P, bNat, PNat)
+            print()
+            basePoints += [point[:numOfCoeff] for point in C]
+            periodPoints += [point[:numOfCoeff] for point in Q]
         
-        pass
+        return basePoints, periodPoints
     
     def addVector(self, v : list[int]):
         """
@@ -101,6 +111,25 @@ class SemiLinearSet:
     def removeRedundantPeriods(self):
         for L in self.linearSets:
             L.removeRedundantPeriods()
+    
+    def addVectors(self, listOfVectors):
+        linearSets = []
+        basePoints = []
+        for lSet in self.linearSets:
+            B, P = lSet.addVectors(listOfVectors)
+            P = [list(x) for x in set(tuple(x) for x in P)]
+            for b in B:
+                if b not in basePoints:
+                    linearSets.append(LinearSet(b, P))
+                    basePoints.append(b)
+                    
+        self.linearSets = linearSets
+        print(f"number of base points = {sum([1 for l in self.linearSets])}")
+        self.removeRedundantBasePoints()
+        self.removeRedundantPeriods()
+        print(f"number of base points = {sum([1 for l in self.linearSets])}")
+        for l in self.linearSets:
+            print(f"b = {l.b}")
     
     def addVector(self, v):
         linearSets = []
@@ -154,7 +183,7 @@ def intersect(b1 : list[int], P1 : list[list[int]], b2 : list[int], P2 : list[li
     P2 = np.array(P2, dtype=int)
     
     # TODO: Change order here.
-    A = np.concatenate((P2.T, -P1.T), axis=1)
+    A = np.concatenate((P2.T, -P1.T), axis=1, dtype=int)
     b = b1 - b2
     
     C = getMinimalPoints(A=A, b=b, noZero=False)
@@ -198,23 +227,33 @@ def removeRedundantBasePoints(B, P):
 def test1():
     L = SemiLinearSet([LinearSet(b = [0,3], P = [[0,1]])])
     L.addVector([3,-1])
-    print(L)
     L.addVector([5,-1])
+    L.addVector([0,-1])
     print(L)
     
 def test2():
-    L = SemiLinearSet([LinearSet(b = [5,0,0], P = [[1,0,0]])])
+    L = SemiLinearSet([LinearSet(b = [5,0,0], P = [[1,0,0], [0,1,0]])])
     L.addVector([-1,23,5])
     L.addVector([1,0,0])
     L.addVector([2,-1,3])
 
     print(L)
-        
-if __name__ == "__main__":
-    #test1()
-    test1()
     
+def test4():
+    L = SemiLinearSet([LinearSet(b = [0,0,3], P = [[0,0,1]])])
+    L.addVectors([[0,1,-1], [0,-1,1], [-1,1,1]])
+    print(L)
+    print()
 
+    
+    
+def test3():
+    L = SemiLinearSet([LinearSet(b = [0,3], P = [[0,1]])])
+    L.addVectors([[3,-1], [5,-1], [0,-1]])
+    print(L)
+          
+if __name__ == "__main__":
+    test4()
     
     
   
