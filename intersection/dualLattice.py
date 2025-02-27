@@ -60,9 +60,7 @@ def lattice_intersection_generators(P, Q):
     # Compute dual bases for L(P) and L(Q)
     D_P = P_basis * (P_basis.T * P_basis).inv()
     D_Q = Q_basis * (Q_basis.T * Q_basis).inv()
-    
-    print(f"D_P = {D_P}")
-    print(f"D_Q = {D_Q}")
+
 
     # Concatenate dual bases horizontally
     D_all = D_P.row_join(D_Q)
@@ -77,7 +75,6 @@ def lattice_intersection_generators(P, Q):
     # Compute the HNF of the integer matrix
     H_int = hermite_normal_form(D_all_int)
     
-    print(f"Hermite = {H_int}")
     # Convert back to a rational matrix
     H = H_int.applyfunc(lambda x: Rational(x, common_denom))
     
@@ -91,7 +88,7 @@ def lattice_intersection_generators(P, Q):
 # Example usage:
 if __name__ == '__main__':
     P = [
-    [0,1]
+
     ]
     
     Q = [
